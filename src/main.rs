@@ -1,8 +1,11 @@
-#[macro_use] extern crate rocket;
+#[macro_use]
+extern crate rocket;
 
 mod paste_id;
-#[cfg(test)] mod tests;
+#[cfg(test)]
+mod tests;
 
+use std::env;
 use std::io;
 
 use rocket::data::{Data, ToByteUnit};
@@ -45,5 +48,14 @@ fn index() -> &'static str {
 
 #[launch]
 fn rocket() -> rocket::Rocket {
-    rocket::ignite().mount("/", routes![index, upload, retrieve])
+    let port = env::var("PORT")
+        .ok()
+        .and_then(|s| s.parse().ok())
+        .unwrap_or(8000);
+
+    let config = rocket::Config::build(rocket::config::Environment::active().unwrap())
+        .port(port)
+        .finalize()
+        .unwrap();
+    rocket::custom(config).mount("/", routes![index, upload, retrieve])
 }
