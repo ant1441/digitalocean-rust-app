@@ -52,10 +52,15 @@ fn rocket() -> rocket::Rocket {
         .ok()
         .and_then(|s| s.parse().ok())
         .unwrap_or(8000);
+    let secret_key = env::var("ROCKET_SECRET_KEY").ok();
 
-    let config = rocket::Config::build(rocket::config::Environment::active().unwrap())
-        .port(port)
-        .finalize()
-        .unwrap();
+    let config_builder =
+        rocket::Config::build(rocket::config::Environment::active().unwrap()).port(port);
+    let config_builder = if let Some(key) = secret_key {
+        config_builder.secret_key(key)
+    } else {
+        config_builder
+    };
+    let config = config_builder.finalize().unwrap();
     rocket::custom(config).mount("/", routes![index, upload, retrieve])
 }
